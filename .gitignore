@@ -1,0 +1,11 @@
+**/__pycache__/*
+.venv
+backup
+build
+dist
+input
+output
+pdfs
+pptxs
+main.spec
+src/_secret
