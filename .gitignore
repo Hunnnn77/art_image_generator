@@ -9,3 +9,8 @@ pdfs
 pptxs
 main.spec
 src/_secret
+
+credentials.json
+token.json
+
+.env

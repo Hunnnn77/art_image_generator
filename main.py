@@ -1,22 +1,29 @@
-from src.sheet import Sheet
-from src.file import File
+import asyncio
 import os
 
+from src.cloud import Cloud
+from src.file import File
+from src.time_tz import Util
 
-def main():
-    # print('Generating Images in "output"')
-    # f = File()
-    # f.init()
-    # f.parser.extract_from_pptx()
-    # f.parser.extract_from_pdf()
-    # if len(os.listdir(f"{os.getcwd()}/input")) == 0:
-    #     return
-    # f.main()
+from dotenv import load_dotenv
 
-    print("Uploading...")
-    s = Sheet()
-    s.main()
+
+async def main():
+    load_dotenv()
+
+    util = Util()
+
+    f = File(util)
+    f.init()
+    f.parser.extract_from_pptx()
+    f.parser.extract_from_pdf()
+    if len(os.listdir(f"{os.getcwd()}/input")) == 0:
+        return
+    await f.main()
+
+    c = Cloud(util=util)
+    await c.main()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

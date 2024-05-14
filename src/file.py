@@ -1,3 +1,4 @@
+import asyncio
 import os
 from pathlib import Path
 from typing import Generator
@@ -5,9 +6,10 @@ from PIL import Image
 import shutil
 import pptx
 import pptx.slide
-from datetime import datetime
-from pytz import timezone
 import fitz
+
+from src.time_tz import Util
+
 
 CWD = os.getcwd()
 
@@ -20,9 +22,9 @@ class File:
     Resized = f"{Output}/resized"
     ResizedPL = f"{Output}/resizedPL"
 
-    def __init__(
-        self,
-    ) -> None:
+    def __init__(self, util: Util) -> None:
+        print('Generating Images...')
+        self.util = util
         self.image = ImageGenerator()
         self.parser = Parser()
 
@@ -48,21 +50,15 @@ class File:
         ]:
             self._make_dir(v)
 
-    def generate_images(self, li: Generator[Path, None, None], folder_name: str = ""):
+    async def generate_images(
+        self, li: Generator[Path, None, None], folder_name: str = ""
+    ):
         resized = ""
         pl = ""
 
         for i, path in enumerate(li):
             if path.is_file():
                 img, size = self.image.get_image_with_size(f"{path.absolute()}")
-                self.image.save_image(
-                    image=img,
-                    location=File.Origin,
-                    fileName=path.name.replace(" ", "")
-                    if not folder_name
-                    else folder_name + "_" + path.name.replace(" ", ""),
-                    index=i + 1,
-                )
 
                 if "." not in path.stem:
                     resized = (
@@ -85,32 +81,49 @@ class File:
 
                 if len(resized) == 0:
                     raise Exception("fileN isn't captured")
-                self.image.save_image(
-                    image=self.image.resizing(image=img, size=size, isPLSize=False),
-                    location=File.Resized,
-                    fileName=resized
-                    if not folder_name
-                    else folder_name + "_" + resized,
-                    index=i + 1,
-                )
-                self.image.save_image(
-                    image=self.image.resizing(image=img, size=size, isPLSize=True),
-                    location=File.ResizedPL,
-                    fileName=pl if not folder_name else folder_name + "_" + pl,
-                    index=i + 1,
-                )
+
+                async with asyncio.TaskGroup() as tg:
+                    tg.create_task(
+                        self.image.save_image(
+                            image=img,
+                            location=File.Origin,
+                            fileName=path.name.replace(" ", "")
+                            if not folder_name
+                            else folder_name + "_" + path.name.replace(" ", ""),
+                            index=i + 1,
+                        )
+                    )
+                    tg.create_task(
+                        self.image.save_image(
+                            image=self.image.resizing(
+                                image=img, size=size, isPLSize=False
+                            ),
+                            location=File.Resized,
+                            fileName=resized
+                            if not folder_name
+                            else folder_name + "_" + resized,
+                            index=i + 1,
+                        )
+                    )
+                    tg.create_task(
+                        self.image.save_image(
+                            image=self.image.resizing(
+                                image=img, size=size, isPLSize=True
+                            ),
+                            location=File.ResizedPL,
+                            fileName=pl if not folder_name else folder_name + "_" + pl,
+                            index=i + 1,
+                        )
+                    )
             else:
                 nested = Path.iterdir(Path(path.absolute()))
-                self.generate_images(nested, folder_name=path.name)
+                await self.generate_images(nested, folder_name=path.name)
 
-    def move_images(
+    async def move_images(
         self,
     ):
-        now = datetime.now(timezone("UTC"))
-        dest = Path(
-            f"{File.Output}/{'_'.join(str(now.astimezone(timezone('Asia/Seoul'))).split(".")[0].replace(":", "-").split(' '))}"
-        )
-
+        time_tz = self.util.get_time_path()
+        dest = Path(f"{File.Output}/{time_tz}")
         if not dest.exists():
             dest.mkdir()
         else:
@@ -123,13 +136,18 @@ class File:
             for p in paths:
                 self._delete_dir(p)
 
-        for dir in [File.Origin, File.Resized, File.ResizedPL]:
+        async def moving(dir: str):
             shutil.move(dir, dest)
 
-    def main(self):
+        async with asyncio.TaskGroup() as tg:
+            tg.create_task(moving(File.Origin))
+            tg.create_task(moving(File.Resized))
+            tg.create_task(moving(File.ResizedPL))
+
+    async def main(self):
         li = Path.iterdir(Path(File.Input))
-        self.generate_images(li)
-        self.move_images()
+        await self.generate_images(li)
+        await self.move_images()
         self._delete_dir(File.Backup)
         shutil.move(f"{File.Input}", f"{File.Backup}")
         self._delete_dir(File.Input)
@@ -151,7 +169,7 @@ class ImageGenerator:
     def resizing(
         self, image: Image.Image, size: tuple[int, int], isPLSize: bool
     ) -> Image.Image:
-        resize = ImageGenerator.PL if not isPLSize else ImageGenerator.Limit
+        resize = ImageGenerator.Limit if not isPLSize else ImageGenerator.PL
         if self.is_height_bigger(size):
             percent_width = resize / float(image.size[0])
             new_height = int(float(image.size[1]) * float(percent_width))
@@ -163,14 +181,11 @@ class ImageGenerator:
             resized_image = image.resize((new_width, resize))
             return resized_image
 
-    def save_image(self, image: Image.Image, location: str, fileName: str, index: int):
-        def contains_label(string: str) -> bool:
-            if "@" in string:
-                return True
-            return False
-
+    async def save_image(
+        self, image: Image.Image, location: str, fileName: str, index: int
+    ):
         image.save(
-            f"{location}/{fileName if contains_label(fileName) else f"{fileName.split('.')[0]}@{index}.{fileName.split('.')[-1]}"}"
+            f"{location}/{fileName if '@' in fileName  else f"{fileName.split('.')[0]}@{index}.{fileName.split('.')[-1]}"}"
         )
 
 
@@ -186,7 +201,6 @@ class Parser:
             for i in range(len(doc)):
                 for j, img in enumerate(doc.get_page_images(i)):
                     xref = img[0]
-                    # image = doc.extract_image(xref)
                     pix = fitz.Pixmap(doc, xref)
                     filename = f"{Parser.To}/{pdf.stem}@{j + 1}.png"
                     pix.save(filename=filename)
