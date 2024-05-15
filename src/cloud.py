@@ -88,10 +88,12 @@ class Cloud:
                     origin.append(ori["url"])
                     desc.append(ori["original_filename"])
 
-        async with asyncio.TaskGroup() as tg:
-            tg.create_task(upload_images(os.listdir(f"{original_full}")))
-            tg.create_task(upload_images(os.listdir(f"{resized_full}")))
-            tg.create_task(upload_images(os.listdir(f"{resized_PL_full}")))
+        await asyncio.gather(
+            *(
+                upload_images(os.listdir(p))
+                for p in [original_full, resized_full, resized_PL_full]
+            )
+        )
 
         comb: tuple[list[str], list[str], list[str], list[str]] = (
             desc,

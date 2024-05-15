@@ -84,39 +84,35 @@ class File:
                 if len(resized) == 0:
                     raise Exception("fileN isn't captured")
 
-                async with asyncio.TaskGroup() as tg:
-                    tg.create_task(
-                        self.image.save_image(
-                            image=img,
-                            location=File.Origin,
-                            fileName=path.name.replace(" ", "")
-                            if not folder_name
-                            else folder_name + "_" + path.name.replace(" ", ""),
-                            index=i + 1,
-                        )
-                    )
-                    tg.create_task(
-                        self.image.save_image(
-                            image=self.image.resize_image(
-                                image=img, size=size, isPLSize=False
-                            ),
-                            location=File.Resized,
-                            fileName=resized
-                            if not folder_name
-                            else folder_name + "_" + resized,
-                            index=i + 1,
-                        )
-                    )
-                    tg.create_task(
-                        self.image.save_image(
-                            image=self.image.resize_image(
-                                image=img, size=size, isPLSize=True
-                            ),
-                            location=File.ResizedPL,
-                            fileName=pl if not folder_name else folder_name + "_" + pl,
-                            index=i + 1,
-                        )
-                    )
+                await asyncio.gather(
+                    self.image.save_image(
+                        image=img,
+                        location=File.Origin,
+                        fileName=path.name.replace(" ", "")
+                        if not folder_name
+                        else folder_name + "_" + path.name.replace(" ", ""),
+                        index=i + 1,
+                    ),
+                    self.image.save_image(
+                        image=self.image.resize_image(
+                            image=img, size=size, isPLSize=False
+                        ),
+                        location=File.Resized,
+                        fileName=resized
+                        if not folder_name
+                        else folder_name + "_" + resized,
+                        index=i + 1,
+                    ),
+                    self.image.save_image(
+                        image=self.image.resize_image(
+                            image=img, size=size, isPLSize=True
+                        ),
+                        location=File.ResizedPL,
+                        fileName=pl if not folder_name else folder_name + "_" + pl,
+                        index=i + 1,
+                    ),
+                )
+
             else:
                 nested = Path.iterdir(Path(path.absolute()))
                 await self.generate_images(nested, folder_name=path.name)
@@ -135,16 +131,15 @@ class File:
                 f"{dest}/resizedPLL",
                 f"{dest}",
             ]
-            async with asyncio.TaskGroup() as tg:
-                for p in paths:
-                    tg.create_task(self._delete_dir(p))
+
+            await asyncio.gather(*(self._delete_dir(p) for p in paths))
 
         async def moving(dir: str):
             shutil.move(dir, dest)
 
-        async with asyncio.TaskGroup() as tg:
-            for p in [File.Origin, File.Resized, File.ResizedPL]:
-                tg.create_task(moving(p))
+        await asyncio.gather(
+            *(moving(p) for p in [File.Origin, File.Resized, File.ResizedPL])
+        )
 
     async def main(self):
         self.init()
@@ -161,9 +156,9 @@ class File:
         await self._delete_dir(File.Backup)
         shutil.move(f"{File.Input}", f"{File.Backup}")
 
-        async with asyncio.TaskGroup() as tg:
-            for p in [File.Input, Parser.Pptx, Parser.Pdfs]:
-                tg.create_task(self._delete_dir(p))
+        await asyncio.gather(
+            *(self._delete_dir(p) for p in [File.Input, Parser.Pptx, Parser.Pdfs])
+        )
 
 
 class ImageGenerator:

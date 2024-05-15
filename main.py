@@ -1,10 +1,9 @@
 import asyncio
+import os
 
 from src.cloud import Cloud
 from src.file import File
 from src.util import Util
-
-import os
 
 
 async def main():
