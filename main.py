@@ -12,7 +12,7 @@ async def main():
     util = Util()
     f = File(util)
     await f.main()
-    if len(os.listdir(f"{os.getcwd()}/backup")) == 0:
+    if len(os.listdir(f"{os.getcwd()}/_backup")) == 0:
         raise Exception("Nothing Generated!")
     c = Cloud(util)
     await c.main()

@@ -105,19 +105,22 @@ class Cloud:
     def get_creds(self):
         SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
         creds = None
+        secret_path = f"{os.getcwd()}/@secret"
 
         try:
             if os.path.exists("token.json"):
-                creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+                creds = Credentials.from_authorized_user_file(
+                    f"{secret_path}/token.json", SCOPES
+                )
             if not creds or not creds.valid:
                 if creds and creds.expired and creds.refresh_token:
                     creds.refresh(Request())
                 else:
                     flow = InstalledAppFlow.from_client_secrets_file(
-                        f"{os.getcwd()}/credentials.json", SCOPES
+                        f"{secret_path}/credentials.json", SCOPES
                     )
                     creds = flow.run_local_server(port=0)
-                    with open("token.json", "w") as token:
+                    with open(f"{secret_path}/token.json", "w") as token:
                         token.write(creds.to_json())
         except Exception as e:
             print(f"An error occurred: {e}")
