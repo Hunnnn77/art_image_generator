@@ -16,6 +16,7 @@ CWD = os.getcwd()
 
 class File:
     Input = f"{CWD}/input"
+    Secret = f"{CWD}/@secret"
     Backup = f"{CWD}/_backup"
     Output = f"{CWD}/_output"
     Origin = f"{Output}/original"
@@ -32,13 +33,14 @@ class File:
         if not p.exists():
             p.mkdir()
 
-    def _delete_dir(self, dir: str):
+    async def _delete_dir(self, dir: str):
         shutil.rmtree(dir, ignore_errors=True)
         if not Path(dir).exists():
             Path(dir).mkdir()
 
     def init(self):
         for v in [
+            File.Secret,
             File.Input,
             File.Output,
             Parser.Pptx,
@@ -133,16 +135,16 @@ class File:
                 f"{dest}/resizedPLL",
                 f"{dest}",
             ]
-            for p in paths:
-                self._delete_dir(p)
+            async with asyncio.TaskGroup() as tg:
+                for p in paths:
+                    tg.create_task(self._delete_dir(p))
 
         async def moving(dir: str):
             shutil.move(dir, dest)
 
         async with asyncio.TaskGroup() as tg:
-            tg.create_task(moving(File.Origin))
-            tg.create_task(moving(File.Resized))
-            tg.create_task(moving(File.ResizedPL))
+            for p in [File.Origin, File.Resized, File.ResizedPL]:
+                tg.create_task(moving(p))
 
     async def main(self):
         self.init()
@@ -156,9 +158,12 @@ class File:
         li = Path.iterdir(Path(File.Input))
         await self.generate_images(li)
         await self.move_images()
-        self._delete_dir(File.Backup)
+        await self._delete_dir(File.Backup)
         shutil.move(f"{File.Input}", f"{File.Backup}")
-        self._delete_dir(File.Input)
+
+        async with asyncio.TaskGroup() as tg:
+            for p in [File.Input, Parser.Pptx, Parser.Pdfs]:
+                tg.create_task(self._delete_dir(p))
 
 
 class ImageGenerator:
