@@ -2,20 +2,18 @@ import asyncio
 
 from src.cloud import Cloud
 from src.file import File
-from src.time_tz import Util
+from src.util import Util
 
 import os
-from dotenv import load_dotenv
 
 
 async def main():
-    load_dotenv(dotenv_path=f"{os.getcwd()}/.env")
+    Util.load()
     util = Util()
     f = File(util)
     await f.main()
     if len(os.listdir(f"{os.getcwd()}/backup")) == 0:
-        print("Empty Output!")
-        return
+        raise Exception("Nothing Generated!")
     c = Cloud(util)
     await c.main()
 

@@ -3,7 +3,7 @@
 backup
 build
 dist
-input
+@input
 _output
 pdfs
 pptxs

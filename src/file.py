@@ -8,14 +8,15 @@ import pptx
 import pptx.slide
 import fitz
 
-from src.time_tz import Util
+from src.util import Util
 
 
 CWD = os.getcwd()
 
 
 class File:
-    Input = f"{CWD}/input"
+    Input = f"{CWD}/@input"
+
     Backup = f"{CWD}/backup"
     Output = f"{CWD}/_output"
     Origin = f"{Output}/original"
@@ -46,6 +47,7 @@ class File:
             File.Origin,
             File.Resized,
             File.ResizedPL,
+            File.Backup,
         ]:
             self._make_dir(v)
 
@@ -146,9 +148,8 @@ class File:
     async def main(self):
         self.init()
 
-        if len(os.listdir(f"{os.getcwd()}/input")) == 0:
-            print("Empty Inputs!")
-            return
+        if len(os.listdir(f"{os.getcwd()}/@input")) == 0:
+            raise Exception("Empty Inputs!")
 
         print("Parsing Images [1/3]")
         self.parser.parsing_pptx()
@@ -200,7 +201,7 @@ class ImageGenerator:
 class Parser:
     Pdfs = f"{CWD}/pdfs"
     Pptx = f"{CWD}/pptxs"
-    To = f"{CWD}/input"
+    To = f"{CWD}/@input"
 
     def parsing_pdf(self):
         pdfs = Path.iterdir(Path(Parser.Pdfs))

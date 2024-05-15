@@ -1,7 +1,6 @@
 from datetime import datetime
 
-from dotenv import dotenv_values
-from src.time_tz import Util
+from src.util import Util
 import cloudinary
 import cloudinary.uploader
 import asyncio
@@ -44,11 +43,10 @@ class Cloud:
     async def update_to_cloudinary(
         self,
     ) -> tuple[tuple[list[str], list[str], list[str], list[str]], str]:
-        config = dotenv_values(".env")
         cloudinary.config(
-            cloud_name=config["CLOUD_NAME"],
-            api_key=config["API_KEY"],
-            api_secret=config["API_SECRET"],
+            cloud_name=self.util.get_envs("CLOUD_NAME"),
+            api_key=self.util.get_envs("API_KEY"),
+            api_secret=self.util.get_envs("API_SECRET"),
             secure=True,
         )
 
@@ -140,8 +138,7 @@ class Cloud:
     def update_sheet(
         self, pair: tuple[tuple[list[str], list[str], list[str], list[str]], str]
     ):
-        config = dotenv_values(".env")
-        id = config["ID"]
+        id = self.util.get_envs("ID")
         creds = self.get_creds()
 
         try:
