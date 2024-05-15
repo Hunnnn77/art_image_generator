@@ -17,7 +17,7 @@ CWD = os.getcwd()
 class File:
     Input = f"{CWD}/input"
     Backup = f"{CWD}/backup"
-    Output = f"{CWD}/output"
+    Output = f"{CWD}/_output"
     Origin = f"{Output}/original"
     Resized = f"{Output}/resized"
     ResizedPL = f"{Output}/resizedPL"
@@ -145,6 +145,9 @@ class File:
 
     async def main(self):
         self.init()
+        if len(os.listdir(f"{os.getcwd()}/input")) == 0:
+            print("Empty inputs")
+            return
         print("Parsing Images [1/3]")
         self.parser.parsing_pptx()
         self.parser.parsing_pdf()

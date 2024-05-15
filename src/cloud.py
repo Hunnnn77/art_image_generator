@@ -1,4 +1,3 @@
-from pathlib import Path
 from datetime import datetime
 
 from dotenv import dotenv_values
@@ -24,7 +23,7 @@ class Cloud:
 
     @staticmethod
     def get_lastest_folder_path() -> str:
-        paths = os.listdir(f"{os.getcwd()}/output")
+        paths = os.listdir(f"{os.getcwd()}/_output")
         temp: datetime | None = None
         for i, p in enumerate(paths):
             date, time = p.split("_")
@@ -42,9 +41,6 @@ class Cloud:
                         Cloud.Last_Index = i
         return paths[Cloud.Last_Index]
 
-    def get_config(self, file: str) -> Path:
-        return Path(f"{os.getcwd()}/src/_secret/{file}")
-
     async def update_to_cloudinary(
         self,
     ) -> tuple[tuple[list[str], list[str], list[str], list[str]], str]:
@@ -57,7 +53,7 @@ class Cloud:
         )
 
         last_folder_name = self.get_lastest_folder_path()
-        root_path = f"{os.getcwd()}/output/{last_folder_name}"
+        root_path = f"{os.getcwd()}/_output/{last_folder_name}"
         original_full = f"{root_path}/original"
         resized_full = f"{root_path}/resized"
         resized_PL_full = f"{root_path}/resizedPL"
@@ -112,18 +108,21 @@ class Cloud:
         SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
         creds = None
 
-        if os.path.exists("token.json"):
-            creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    "credentials.json", SCOPES
-                )
-                creds = flow.run_local_server(port=0)
-                with open("token.json", "w") as token:
-                    token.write(creds.to_json())
+        try:
+            if os.path.exists("token.json"):
+                creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+            if not creds or not creds.valid:
+                if creds and creds.expired and creds.refresh_token:
+                    creds.refresh(Request())
+                else:
+                    flow = InstalledAppFlow.from_client_secrets_file(
+                        "credentials.json", SCOPES
+                    )
+                    creds = flow.run_local_server(port=0)
+                    with open("token.json", "w") as token:
+                        token.write(creds.to_json())
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
         return creds
 

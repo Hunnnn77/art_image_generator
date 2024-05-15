@@ -4,7 +4,7 @@ backup
 build
 dist
 input
-output
+_output
 pdfs
 pptxs
 main.spec
