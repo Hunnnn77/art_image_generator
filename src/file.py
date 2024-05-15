@@ -94,7 +94,7 @@ class File:
                     )
                     tg.create_task(
                         self.image.save_image(
-                            image=self.image.resizing(
+                            image=self.image.resize_image(
                                 image=img, size=size, isPLSize=False
                             ),
                             location=File.Resized,
@@ -106,7 +106,7 @@ class File:
                     )
                     tg.create_task(
                         self.image.save_image(
-                            image=self.image.resizing(
+                            image=self.image.resize_image(
                                 image=img, size=size, isPLSize=True
                             ),
                             location=File.ResizedPL,
@@ -121,7 +121,7 @@ class File:
     async def move_images(
         self,
     ):
-        time_tz = self.util.get_time_path()
+        time_tz = self.util.get_time_tz()
         dest = Path(f"{File.Output}/{time_tz}")
         if not dest.exists():
             dest.mkdir()
@@ -146,8 +146,8 @@ class File:
     async def main(self):
         self.init()
         print("Parsing Images [1/3]")
-        self.parser.extract_from_pptx()
-        self.parser.extract_from_pdf()
+        self.parser.parsing_pptx()
+        self.parser.parsing_pdf()
         li = Path.iterdir(Path(File.Input))
         await self.generate_images(li)
         await self.move_images()
@@ -164,16 +164,16 @@ class ImageGenerator:
         image = Image.open(f"{path}")
         return image, image.size
 
-    def is_height_bigger(self, size: tuple[int, int]) -> bool:
-        if size[0] < size[1]:
-            return True
-        return False
-
-    def resizing(
+    def resize_image(
         self, image: Image.Image, size: tuple[int, int], isPLSize: bool
     ) -> Image.Image:
+        def is_height_bigger(size: tuple[int, int]) -> bool:
+            if size[0] < size[1]:
+                return True
+            return False
+
         resize = ImageGenerator.Limit if not isPLSize else ImageGenerator.PL
-        if self.is_height_bigger(size):
+        if is_height_bigger(size):
             percent_width = resize / float(image.size[0])
             new_height = int(float(image.size[1]) * float(percent_width))
             resized_image = image.resize((resize, new_height))
@@ -197,7 +197,7 @@ class Parser:
     Pptx = f"{CWD}/pptxs"
     To = f"{CWD}/input"
 
-    def extract_from_pdf(self):
+    def parsing_pdf(self):
         pdfs = Path.iterdir(Path(Parser.Pdfs))
         for pdf in pdfs:
             doc: fitz.Document = fitz.open(pdf.absolute())
@@ -208,7 +208,7 @@ class Parser:
                     filename = f"{Parser.To}/{pdf.stem}@{j + 1}.png"
                     pix.save(filename=filename)
 
-    def extract_from_pptx(self):
+    def parsing_pptx(self):
         li = Path.iterdir(Path(Parser.Pptx))
         for f in li:
             prs = pptx.Presentation(f)

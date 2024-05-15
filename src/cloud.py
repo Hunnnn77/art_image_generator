@@ -108,7 +108,7 @@ class Cloud:
         pprint.pp(comb)
         return comb, last_folder_name
 
-    def get_auth(self):
+    def get_creds(self):
         SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
         creds = None
 
@@ -127,8 +127,8 @@ class Cloud:
 
         return creds
 
-    def make_new_sheet(self, service, spreadsheet_id):
-        title = self.util.get_time_path()
+    def new_sheet(self, service, spreadsheet_id):
+        title = self.util.get_time_tz()
         body = {"requests": [{"addSheet": {"properties": {"title": title}}}]}
         try:
             service.spreadsheets().batchUpdate(
@@ -138,17 +138,17 @@ class Cloud:
             print(f"An error occurred: {e}")
         return title
 
-    def share_to_cloud(
+    def update_sheet(
         self, pair: tuple[tuple[list[str], list[str], list[str], list[str]], str]
     ):
         config = dotenv_values(".env")
         id = config["ID"]
-        creds = self.get_auth()
+        creds = self.get_creds()
 
         try:
             li, _ = pair
             service = build("sheets", "v4", credentials=creds)
-            title = self.make_new_sheet(service, id)
+            title = self.new_sheet(service, id)
             range_to_append = f"{title}!A1:Z"
 
             print(f"w:{len(li)} / h:{len(li[0])}")
@@ -178,4 +178,4 @@ class Cloud:
         print("Uploading [2/3]")
         pair = await self.update_to_cloudinary()
         print("Uploading [3/3]")
-        self.share_to_cloud(pair)
+        self.update_sheet(pair)

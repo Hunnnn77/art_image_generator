@@ -13,11 +13,10 @@ async def main():
     util = Util()
     f = File(util)
     c = Cloud(util)
-
+    _ = await f.main()
     if len(os.listdir(f"{os.getcwd()}/input")) == 0:
         return
-    await f.main()
-    # await c.main()
+    _ = await c.main()
 
 
 if __name__ == "__main__":

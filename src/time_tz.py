@@ -3,7 +3,7 @@ from pytz import timezone
 
 
 class Util:
-    def get_time_path(self) -> str:
+    def get_time_tz(self) -> str:
         now = datetime.now(timezone("UTC"))
         time_tz = "_".join(
             str(now.astimezone(timezone("Asia/Seoul")))
