@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from pytz import timezone
 import os
 
+CWD = os.getcwd()
 
 class Util:
     @classmethod
