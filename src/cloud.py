@@ -20,7 +20,6 @@ class Cloud:
     Last_Index = 0
 
     def __init__(self, util: Util) -> None:
-        print("Uploading...")
         self.util = util
 
     @staticmethod
@@ -57,8 +56,8 @@ class Cloud:
             secure=True,
         )
 
-        last_folder = self.get_lastest_folder_path()
-        root_path = f"{os.getcwd()}/output/{last_folder}"
+        last_folder_name = self.get_lastest_folder_path()
+        root_path = f"{os.getcwd()}/output/{last_folder_name}"
         original_full = f"{root_path}/original"
         resized_full = f"{root_path}/resized"
         resized_PL_full = f"{root_path}/resizedPL"
@@ -74,7 +73,7 @@ class Cloud:
                     idx = p.rfind("_RESIZED")
                     r_300 = cloudinary.uploader.upload(
                         f"{resized_full}/{p}",
-                        folder=f"{last_folder}/300px",
+                        folder=f"{last_folder_name}/300px",
                         public_id=f"{p[:idx]}_300px",
                     )
                     resized.append(r_300["url"])
@@ -82,14 +81,14 @@ class Cloud:
                     idx = p.rfind("_PL")
                     pl = cloudinary.uploader.upload(
                         f"{resized_PL_full}/{p}",
-                        folder=f"{last_folder}/60px",
+                        folder=f"{last_folder_name}/60px",
                         public_id=f"{p[:idx]}_60px",
                     )
                     resized_pl.append(pl["url"])
                 else:
                     ori = cloudinary.uploader.upload(
                         f"{original_full}/{p}",
-                        folder=f"{last_folder}/full",
+                        folder=f"{last_folder_name}/full",
                         public_id=f"{p}",
                     )
                     origin.append(ori["url"])
@@ -107,7 +106,7 @@ class Cloud:
             resized_pl,
         )
         pprint.pp(comb)
-        return comb, last_folder
+        return comb, last_folder_name
 
     def get_auth(self):
         SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -128,7 +127,8 @@ class Cloud:
 
         return creds
 
-    def make_new_sheet(self, title: str, service, spreadsheet_id):
+    def make_new_sheet(self, service, spreadsheet_id):
+        title = self.util.get_time_path()
         body = {"requests": [{"addSheet": {"properties": {"title": title}}}]}
         try:
             service.spreadsheets().batchUpdate(
@@ -136,6 +136,7 @@ class Cloud:
             ).execute()
         except Exception as e:
             print(f"An error occurred: {e}")
+        return title
 
     def share_to_cloud(
         self, pair: tuple[tuple[list[str], list[str], list[str], list[str]], str]
@@ -145,16 +146,16 @@ class Cloud:
         creds = self.get_auth()
 
         try:
-            li, title = pair
+            li, _ = pair
             service = build("sheets", "v4", credentials=creds)
+            title = self.make_new_sheet(service, id)
             range_to_append = f"{title}!A1:Z"
 
-            self.make_new_sheet(title, service, id)
-
-            print(f"Row:{len(li[0])} / Col:{len(li)}")
-
+            print(f"w:{len(li)} / h:{len(li[0])}")
             body = {
-                "values": list(zip(li[1], li[2], li[3], li[0])),
+                "values": list(
+                    zip([v + 1 for v in range(len(li[0]))], li[1], li[2], li[3], li[0])
+                ),
             }
 
             response = (
@@ -174,5 +175,7 @@ class Cloud:
             print(err)
 
     async def main(self):
+        print("Uploading [2/3]")
         pair = await self.update_to_cloudinary()
+        print("Uploading [3/3]")
         self.share_to_cloud(pair)

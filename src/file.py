@@ -23,7 +23,6 @@ class File:
     ResizedPL = f"{Output}/resizedPL"
 
     def __init__(self, util: Util) -> None:
-        print('Generating Images...')
         self.util = util
         self.image = ImageGenerator()
         self.parser = Parser()
@@ -145,6 +144,10 @@ class File:
             tg.create_task(moving(File.ResizedPL))
 
     async def main(self):
+        self.init()
+        print("Parsing Images [1/3]")
+        self.parser.extract_from_pptx()
+        self.parser.extract_from_pdf()
         li = Path.iterdir(Path(File.Input))
         await self.generate_images(li)
         await self.move_images()
@@ -185,7 +188,7 @@ class ImageGenerator:
         self, image: Image.Image, location: str, fileName: str, index: int
     ):
         image.save(
-            f"{location}/{fileName if '@' in fileName  else f"{fileName.split('.')[0]}@{index}.{fileName.split('.')[-1]}"}"
+            f"{location}/{fileName if '@' in fileName else f"{fileName.split('.')[0]}@{index}.{fileName.split('.')[-1]}"}"
         )
 
 

@@ -10,19 +10,14 @@ from dotenv import load_dotenv
 
 async def main():
     load_dotenv()
-
     util = Util()
-
     f = File(util)
-    f.init()
-    f.parser.extract_from_pptx()
-    f.parser.extract_from_pdf()
+    c = Cloud(util)
+
     if len(os.listdir(f"{os.getcwd()}/input")) == 0:
         return
     await f.main()
-
-    c = Cloud(util=util)
-    await c.main()
+    # await c.main()
 
 
 if __name__ == "__main__":
