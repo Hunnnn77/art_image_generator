@@ -145,9 +145,11 @@ class File:
 
     async def main(self):
         self.init()
+
         if len(os.listdir(f"{os.getcwd()}/input")) == 0:
-            print("Empty inputs")
+            print("Empty Inputs!")
             return
+
         print("Parsing Images [1/3]")
         self.parser.parsing_pptx()
         self.parser.parsing_pdf()
