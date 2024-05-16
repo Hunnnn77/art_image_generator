@@ -80,10 +80,11 @@ class Cloud:
                     )
                     resized_pl.append(pl["url"])
                 else:
+                    remove_ext = p.split(".")[0]
                     ori = cloudinary.uploader.upload(
                         f"{original_full}/{p}",
                         folder=f"{last_folder_name}/full",
-                        public_id=f"{p}",
+                        public_id=f"{remove_ext}",
                     )
                     origin.append(ori["url"])
                     desc.append(ori["original_filename"])
@@ -154,9 +155,7 @@ class Cloud:
 
             print(f"w:{len(li)} / h:{len(li[0])}")
             body = {
-                "values": list(
-                    zip([v + 1 for v in range(len(li[0]))], li[1], li[2], li[3], li[0])
-                ),
+                "values": list(zip(li[1], li[2], li[3], li[0])),
             }
 
             response = (
