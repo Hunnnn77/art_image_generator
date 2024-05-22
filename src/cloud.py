@@ -19,8 +19,9 @@ from googleapiclient.errors import HttpError
 class Cloud:
     Last_Index = 0
 
-    def __init__(self, util: Util) -> None:
+    def __init__(self, util: Util, sheet_id: str) -> None:
         self.util = util
+        self.sheet_id = sheet_id
 
     @staticmethod
     def get_lastest_folder_path() -> str:
@@ -146,7 +147,7 @@ class Cloud:
     def update_sheet(
         self, pair: tuple[tuple[list[str], list[str], list[str], list[str]], str]
     ):
-        id = self.util.get_envs("ID")
+        id = self.util.get_envs("ID") if self.sheet_id == "" else self.sheet_id
         creds = self.get_creds()
 
         try:
@@ -186,7 +187,7 @@ class Cloud:
     def generating_json(self):
         creds = self.get_creds()
         service = build("sheets", "v4", credentials=creds)
-        id = self.util.get_envs("ID")
+        id = self.util.get_envs("ID") if self.sheet_id == "" else self.sheet_id
         range_name = "seed!A1:Z"
 
         result = (
@@ -202,7 +203,7 @@ class Cloud:
                 {
                     "name": name,
                     "year": year,
-                    "title": title,
+                    "title": title.split("@")[0],
                     "materials": materials,
                     "size": size,
                     "img": P_300,
@@ -221,5 +222,6 @@ class Cloud:
         print("Uploading [3/3]")
         self.update_sheet(pair)
 
-    async def main2(self):
+    def main2(self):
+        print("Generating json [1/1]")
         self.generating_json()

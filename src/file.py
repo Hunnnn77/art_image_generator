@@ -148,7 +148,7 @@ class File:
             *(moving(p) for p in [File.Origin, File.Resized, File.ResizedPL])
         )
 
-    async def main(self):
+    async def main(self) -> None:
         self.init()
 
         print("Parsing Images [1/3]")

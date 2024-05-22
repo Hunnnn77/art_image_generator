@@ -6,12 +6,13 @@ import os
 
 CWD = os.getcwd()
 
+
 class Util:
     @classmethod
     def load(cls):
         load_dotenv(f"{os.getcwd()}/@secret/.env")
 
-    def get_envs(self, key: str) -> dict[str, str]:
+    def get_envs(self, key: str) -> str:
         vals = ["ID", "CLOUD_NAME", "API_KEY", "API_SECRET"]
         d = defaultdict()
         for v in vals:
