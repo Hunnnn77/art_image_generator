@@ -6,6 +6,8 @@ import cloudinary.uploader
 import asyncio
 import os.path
 import pprint
+import json
+from pathlib import Path
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -153,9 +155,16 @@ class Cloud:
             title = self.new_sheet(service, id)
             range_to_append = f"{title}!A1:Z"
 
+            names = [v.split("_")[0] for v in li[0]]
+            titles = [v.split("_")[1] for v in li[0]]
+
+            values = list(
+                zip(li[1], li[2], li[3], names, titles)
+            )  # [ [origin, 300, 60, name] ]
+
             print(f"w:{len(li)} / h:{len(li[0])}")
             body = {
-                "values": list(zip(li[1], li[2], li[3], li[0])),
+                "values": values,
             }
 
             response = (
@@ -174,8 +183,43 @@ class Cloud:
         except HttpError as err:
             print(err)
 
+    def generating_json(self):
+        creds = self.get_creds()
+        service = build("sheets", "v4", credentials=creds)
+        id = self.util.get_envs("ID")
+        range_name = "seed!A1:Z"
+
+        result = (
+            service.spreadsheets()
+            .values()
+            .get(spreadsheetId=id, range=range_name)
+            .execute()
+        )
+        rows = result.get("values", [])
+        data = []
+        for _, P_300, _, name, title, materials, size, year in rows:
+            data.append(
+                {
+                    "name": name,
+                    "year": year,
+                    "title": title,
+                    "materials": materials,
+                    "size": size,
+                    "img": P_300,
+                }
+            )
+        json_string = json.dumps(data)
+        save_path = Path(f"{os.getcwd()}/_json")
+        if not save_path.exists():
+            save_path.mkdir()
+        with open(f"{save_path}/{self.util.get_time_tz()}.json", "w") as f:
+            f.write(json_string)
+
     async def main(self):
         print("Uploading [2/3]")
         pair = await self.update_to_cloudinary()
         print("Uploading [3/3]")
         self.update_sheet(pair)
+
+    async def main2(self):
+        self.generating_json()

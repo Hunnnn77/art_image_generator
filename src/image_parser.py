@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Generator
 from PIL import Image
 import pptx
 import pptx.slide
@@ -48,6 +49,9 @@ class ImageParser:
     Pptx = f"{CWD}/pptxs"
     To = f"{CWD}/input"
 
+    def trim_file(self, name: str):
+        return name.replace("_", "-").replace(" ", "-").replace(",", "-")
+
     def parsing_pdf(self):
         pdfs = Path.iterdir(Path(ImageParser.Pdfs))
         for pdf in pdfs:
@@ -56,11 +60,16 @@ class ImageParser:
                 for j, img in enumerate(doc.get_page_images(i)):
                     xref = img[0]
                     pix = fitz.Pixmap(doc, xref)
-                    filename = f"{ImageParser.To}/{pdf.stem}@{j + 1}.png"
+
+                    path = Path(f"{ImageParser.To}/{self.trim_file(pdf.stem)}")
+                    if not path.exists():
+                        path.mkdir()
+                    filename = f"{path}/{pdf.stem}@{j + 1}.png"
                     pix.save(filename=filename)
 
     def parsing_pptx(self):
-        li = Path.iterdir(Path(ImageParser.Pptx))
+        li: Generator[Path, None, None] = Path.iterdir(Path(ImageParser.Pptx))
+
         for f in li:
             prs = pptx.Presentation(f)
             name = f.stem
@@ -77,7 +86,11 @@ class ImageParser:
                         if not path.exists():
                             path.mkdir()
 
-                        path = f"{path}/{name}@{i}.jpg"
+                        save_dir = Path(f"{path}/{self.trim_file(name)}")
+                        if not save_dir.exists():
+                            save_dir.mkdir()
+
+                        path = f"{save_dir}/{name}@{i}.jpg"
                         i += 1
                         if image_bytes is not None:
                             with open(

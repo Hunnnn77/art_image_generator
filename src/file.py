@@ -1,5 +1,4 @@
 import asyncio
-import os
 import shutil
 from pathlib import Path
 from typing import Generator
@@ -14,6 +13,7 @@ class File:
     Secret = f"{CWD}/@secret"
     Backup = f"{CWD}/_backup"
     Output = f"{CWD}/_output"
+    Json = f"{CWD}/_json"
     Origin = f"{Output}/original"
     Resized = f"{Output}/resized"
     ResizedPL = f"{Output}/resizedPL"
@@ -42,6 +42,7 @@ class File:
             ImageParser.Pptx,
             ImageParser.Pdfs,
             File.Origin,
+            File.Json,
             File.Resized,
             File.ResizedPL,
             File.Backup,
@@ -59,20 +60,24 @@ class File:
                 img, size = self.image.get_image_with_size(f"{path.absolute()}")
 
                 if "." not in path.stem:
+                    resized = resized.replace(",", "-").replace("_", "-")
                     resized = (
-                        path.name.split(".")[0].replace(" ", "")
+                        path.name.split(".")[0].replace(" ", "-")
                         + "_RESIZED"
                         + path.suffix
                     )
-                    pl = path.name.split(".")[0].replace(" ", "") + "_PL" + path.suffix
+                    pl = pl.replace(",", "-").replace("_", "-")
+                    pl = path.name.split(".")[0].replace(" ", "-") + "_PL" + path.suffix
                 else:
+                    resized = resized.replace(",", "-").replace("_", "-")
                     resized: str = (
-                        path.stem.replace(".", "_").replace(" ", "")
+                        path.stem.replace(".", "_").replace(" ", "-")
                         + "_RESIZED"
                         + path.suffix
                     )
+                    pl = pl.replace(",", "-").replace("_", "-")
                     pl: str = (
-                        path.stem.replace(".", "_").replace(" ", "")
+                        path.stem.replace(".", "_").replace(" ", "-")
                         + "_PL"
                         + path.suffix
                     )
@@ -84,9 +89,15 @@ class File:
                     self.image.save_image(
                         image=img,
                         location=File.Origin,
-                        fileName=path.name.replace(" ", "")
+                        fileName=path.name.replace(",", "-")
+                        .replace(" ", "-")
+                        .replace("_", "-")
                         if not folder_name
-                        else folder_name + "_" + path.name.replace(" ", ""),
+                        else folder_name
+                        + "_"
+                        + path.name.replace(",", "-")
+                        .replace(" ", "-")
+                        .replace("_", "-"),
                         index=i + 1,
                     ),
                     self.image.save_image(
@@ -139,9 +150,6 @@ class File:
 
     async def main(self):
         self.init()
-
-        if len(os.listdir(f"{os.getcwd()}/input")) == 0:
-            raise Exception("Empty Inputs!")
 
         print("Parsing Images [1/3]")
         self.image_parser.parsing_pptx()
