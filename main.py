@@ -15,7 +15,7 @@ async def main():
         sheet_id = input("sheet Id?\n")
         if sheet_id == "":
             print(
-                "`sheet_id` is empty, may error when you already copied original file"
+                "[WARN] `sheet_id` is empty, may error when you already copied original file"
             )
         match int(user_input):
             case 1:
