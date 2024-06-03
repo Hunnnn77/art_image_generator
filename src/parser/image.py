@@ -1,9 +1,10 @@
 from pathlib import Path
 from typing import Generator
-from PIL import Image
+
+import fitz
 import pptx
 import pptx.slide
-import fitz
+from PIL import Image
 
 from src.util import CWD
 
@@ -17,7 +18,7 @@ class ImageGenerator:
         return image, image.size
 
     def resize_image(
-        self, image: Image.Image, size: tuple[int, int], isPLSize: bool
+            self, image: Image.Image, size: tuple[int, int], isPLSize: bool
     ) -> Image.Image:
         def is_height_bigger(size: tuple[int, int]) -> bool:
             if size[0] < size[1]:
@@ -37,7 +38,7 @@ class ImageGenerator:
             return resized_image
 
     async def save_image(
-        self, image: Image.Image, location: str, fileName: str, index: int
+            self, image: Image.Image, location: str, fileName: str, index: int
     ):
         image.save(
             f"{location}/{fileName if '@' in fileName else f"{fileName.split('.')[0]}@{index}.{fileName.split('.')[-1]}"}"
@@ -94,8 +95,8 @@ class ImageParser:
                         i += 1
                         if image_bytes is not None:
                             with open(
-                                path,
-                                "wb",
+                                    path,
+                                    "wb",
                             ) as f:
                                 f.write(image_bytes)
                         else:

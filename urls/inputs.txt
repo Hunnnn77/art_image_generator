@@ -1,0 +1,10 @@
+//engineering
+a1@http://a@2024/01/01
+a2@http://a@2024/01/01
+a3@http://a@2024/01/01
+//gallery
+//logistics
+//medical
+d@http://b@2024-01-01
+d1@http://b@2024-01-01
+d3@http://b@2024-01-01
