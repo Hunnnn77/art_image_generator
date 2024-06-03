@@ -1,4 +1,5 @@
 import asyncio
+import os
 import shutil
 from pathlib import Path
 from typing import Generator, Any
@@ -57,6 +58,9 @@ class File:
         ]:
             make_dir(v)
 
+        has = os.listdir(Path(f"{File.Urls}"))
+        if len(has) > 0:
+            return
         with open(f"{File.Urls}/inputs.txt", 'w', encoding='utf-8') as f:
             f.writelines("""//engineering
 //gallery
