@@ -1,6 +1,3 @@
-from collections import defaultdict
-
-
 class TextParser:
     def __init__(self, path: str):
         self.path = path

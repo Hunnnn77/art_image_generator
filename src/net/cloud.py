@@ -68,7 +68,7 @@ class Cloud:
         return paths[Cloud.Last_Index]
 
     async def update_to_cloudinary(
-            self, is_tagged: bool
+            self, need_original_only: bool
     ) -> (
             tuple[tuple[list[str], list[str], list[str], list[str]], str]
             | tuple[tuple[list[str], list[str]], str]
@@ -122,7 +122,7 @@ class Cloud:
                     origin.append(ori["url"])
                     desc.append(ori["original_filename"])
 
-        if not is_tagged:
+        if not need_original_only:
             await asyncio.gather(
                 *(
                     upload_images(os.listdir(p))
@@ -242,17 +242,38 @@ class Cloud:
         assert len(pair[0]) == 4, "desc, original, resized, pl"
         self.update_sheet(pair)  # type: ignore
 
-    async def parse_tagged(self):
+    async def parse_portfolio(self):
         from src.net.mongo import Mongo
         from src.variables import Collections
 
-        print("Uploading Tagged [2/3]")
+        print("Uploading Portfolio [2/3]")
         urls, _ = await self.update_to_cloudinary(True)
         assert len(urls) == 2, "desc, original"
 
         list_of = [{
             "type": "img",
             "title": f"{datetime.now().strftime("%B")} {datetime.now().year}",
+            "url": url,
+            "year": datetime.now().year
+        } for url in urls[1]]
+
+        print("Inserting Images to Database [3/3]")
+        cli = Mongo(self.util)
+        cli.conn()
+        cli.insert_images(Collections.Gallery, list_of)
+
+    async def parse_references(self):
+        from src.net.mongo import Mongo
+        from src.variables import Collections
+
+        print("Uploading Reference [2/3]")
+        urls, _ = await self.update_to_cloudinary(True)
+
+        assert len(urls) == 2, "desc, original"
+
+        list_of = [{
+            "type": "ref",
+            "title": url.split('/')[-1].split('_')[0],
             "url": url,
             "year": datetime.now().year
         } for url in urls[1]]

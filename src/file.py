@@ -24,7 +24,8 @@ def make_dir(path: str):
 
 class File:
     Input = f"{CWD}/input"
-    Tagged = f"{CWD}/tagged"
+    Portfolio = f"{CWD}/portfolio"
+    Reference = f"{CWD}/reference"
     Urls = f"{CWD}/urls"
     Secret = f"{CWD}/@secret"
     Backup = f"{CWD}/_backup"
@@ -45,7 +46,8 @@ class File:
         for v in [
             File.Secret,
             File.Input,
-            File.Tagged,
+            File.Portfolio,
+            File.Reference,
             File.Urls,
             File.Output,
             ImageParser.Pptx,
@@ -166,8 +168,6 @@ class File:
         )
 
     async def parse_original(self) -> None:
-        self.initialize()
-
         print("Parsing Images [1/3]")
         self.image_parser.parsing_pptx()
         self.image_parser.parsing_pdf()
@@ -181,16 +181,23 @@ class File:
             *(del_dir(p) for p in [File.Input, ImageParser.Pptx, ImageParser.Pdfs])
         )
 
-    async def parse_tagged(self) -> None:
-        self.initialize()
-
+    async def parse_portfolio(self) -> None:
         print("Parsing Tagged Images [1/3]")
-        li: Generator[Path, None, None] = Path.iterdir(Path(File.Tagged))
+        li: Generator[Path, None, None] = Path.iterdir(Path(File.Portfolio))
         await self.generate_images(li)
         await self.move_images()
         await del_dir(File.Backup)
-        shutil.move(f"{File.Tagged}", f"{File.Backup}")
-        await del_dir(File.Tagged)
+        shutil.move(f"{File.Portfolio}", f"{File.Backup}")
+        await del_dir(File.Portfolio)
+
+    async def parse_reference(self) -> None:
+        print("Parsing Tagged Images [1/3]")
+        li: Generator[Path, None, None] = Path.iterdir(Path(File.Reference))
+        await self.generate_images(li)
+        await self.move_images()
+        await del_dir(File.Backup)
+        shutil.move(f"{File.Reference}", f"{File.Backup}")
+        await del_dir(File.Reference)
 
     def parsing_text(self):
         from src.net.mongo import Mongo

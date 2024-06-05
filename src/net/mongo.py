@@ -8,7 +8,7 @@ from src.variables import Collections
 
 
 class Mongo:
-    def __init__(self, util: Util, db_name: str = "gallery") -> None:
+    def __init__(self, util: Util, db_name: str = "axa") -> None:
         self.util = util
         self.db_name = db_name
         self.client: MongoClient | None = None

@@ -21,7 +21,11 @@ async def main():
     c = Cloud(util, sheet_id)
 
     user_input = input(
-        """1: raw_images to google_sheet\n2: generating json\n\t[WARN]\n\t- urls should be in SHEET!seed\n\t- fill detailed information(materials, years ..) for pieces\n3: tagged_images to database\n4: parsing press urls via txt file\n(Select 1 to 4)\n""")
+        """1: gen image(original x 300 x 60 -> google_sheet)
+2: gen portfolio(by date)
+3: gen reference(by folder_name you designated)
+4: gen press(all)
+5: gen json(SHEET!seed -> figma)\n\t[WARN]\n\t- urls + detailed information(materials, years ..)\n""")
     try:
         match int(user_input):
             case 1:
@@ -30,13 +34,16 @@ async def main():
                     raise Exception("Nothing Generated!")
                 await c.parse_original()
             case 2:
-                c.generating_json()
-                raise ValueError("Invalid command")
+                await f.parse_portfolio()
+                await c.parse_portfolio()
             case 3:
-                await f.parse_tagged()
-                await c.parse_tagged()
+                await f.parse_reference()
+                await c.parse_references()
             case 4:
                 f.parsing_text()
+            case 5:
+                c.generating_json()
+                raise ValueError("Invalid command")
             case _:
                 raise NotImplementedError("Unknown command")
 
